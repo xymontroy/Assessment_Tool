@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruiter Assessment Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Home View -->
+        <div id="home-view" class="view">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title">Recruiter Assessment Tool</h1>
+                    <p class="card-description">Complete the assessment to find the best role matches for you.</p>
+                    <div class="divider"></div>
+                </div>
+                <div class="card-content">
+                    <p class="intro-text">
+                        This tool helps you identify the most suitable roles based on your qualifications,
+                        technical skills, industry experience, education, and years of experience. The assessment will analyze your input and suggest the top 3
+                        best-matching roles.
+                    </p>
+                    <div class="text-center">
+                        <button id="start-assessment-btn" class="btn btn-primary">Start Assessment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment View -->
+        <div id="assessment-view" class="view hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title">Candidate Assessment</h1>
+                    <p class="card-description">Complete all sections to get role recommendations</p>
+                    <div class="divider"></div>
+                </div>
+                <div class="card-content">
+                    <div class="tabs">
+                        <div class="tabs-list">
+                            <button class="tab-trigger active" data-tab="applicant">Applicant</button>
+                            <button class="tab-trigger" data-tab="education">Education</button>
+                            <button class="tab-trigger" data-tab="qualifications">Qualifications</button>
+                            <button class="tab-trigger" data-tab="technical">Technical</button>
+                            <button class="tab-trigger" data-tab="industry">Industry</button>
+                            <button class="tab-trigger" data-tab="experience">Experience</button>
+                        </div>
+
+                        <!-- Applicant Tab -->
+                        <div id="applicant-tab" class="tab-content active">
+                            <div class="tab-header">
+                                <h2>Applicant Information</h2>
+                                <p>Enter the applicant's basic information</p>
+                            </div>
+                            <div class="form-container">
+                                <div class="form-group">
+                                    <label for="name">Full Name <span class="required">*</span></label>
+                                    <input type="text" id="name" name="name" placeholder="Enter applicant's full name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email Address <span class="required">*</span></label>
+                                    <input type="email" id="email" name="email" placeholder="Enter applicant's email address" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" id="phone" name="phone" placeholder="Enter applicant's phone number (optional)">
+                                </div>
+                                <div id="applicant-error" class="error-message hidden">
+                                    Please fill in all required fields.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Education Tab -->
+                        <div id="education-tab" class="tab-content hidden">
+                            <div class="tab-header">
+                                <h2>Education Level <span class="required">*</span></h2>
+                                <p>Select the highest education level achieved by the candidate</p>
+                            </div>
+                            <div class="form-container">
+                                <div class="radio-group" id="education-options">
+                                    <!-- Education options will be populated by JavaScript -->
+                                </div>
+                                <div id="education-error" class="error-message hidden">
+                                    Please select an education level.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Qualifications Tab -->
+                        <div id="qualifications-tab" class="tab-content hidden">
+                            <div class="tab-header">
+                                <h2>Qualifications <span class="required">*</span></h2>
+                                <p>Select all qualifications that apply to the candidate</p>
+                            </div>
+                            <div class="form-container">
+                                <div id="qualifications-container">
+                                    <!-- Qualification categories will be populated by JavaScript -->
+                                </div>
+                                <div id="qualifications-error" class="error-message hidden">
+                                    Please select at least one qualification.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Tab -->
+                        <div id="technical-tab" class="tab-content hidden">
+                            <div class="tab-header">
+                                <h2>Technical Skills <span class="required">*</span></h2>
+                                <p>Select all technical skills that apply to the candidate</p>
+                            </div>
+                            <div class="form-container">
+                                <div id="technical-container">
+                                    <!-- Technical skills will be populated by JavaScript -->
+                                </div>
+                                <div id="technical-error" class="error-message hidden">
+                                    Please select at least one technical skill.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Industry Tab -->
+                        <div id="industry-tab" class="tab-content hidden">
+                            <div class="tab-header">
+                                <h2>Industry & Niche Experience <span class="required">*</span></h2>
+                                <p>Check all industries and niches that you has experience in</p>
+                            </div>
+                            <div class="form-container">
+                                <div id="industry-container">
+                                    <!-- Industry options will be populated by JavaScript -->
+                                </div>
+                                <div id="industry-error" class="error-message hidden">
+                                    Please select at least one industry.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Experience Tab -->
+                        <div id="experience-tab" class="tab-content hidden">
+                            <div class="tab-header">
+                                <h2>Years of Experience <span class="required">*</span></h2>
+                                <p>Select your total relevant work experience</p>
+                            </div>
+                            <div class="form-container">
+                                <div class="radio-group" id="experience-options">
+                                    <!-- Experience options will be populated by JavaScript -->
+                                </div>
+                                <div id="experience-error" class="error-message hidden">
+                                    Please select an experience level.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button id="prev-btn" class="btn btn-outline" disabled>Previous</button>
+                    <button id="next-btn" class="btn btn-primary">Next</button>
+                    <button id="submit-btn" class="btn btn-primary hidden">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading View -->
+        <div id="loading-view" class="view hidden">
+            <div class="card">
+                <div class="card-content text-center">
+                    <div class="loader"></div>
+                    <p>Calculating results...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results View -->
+        <div id="results-view" class="view hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title">Assessment Results</h1>
+                    <p class="card-description">Based on the assessment, here are the best role matches</p>
+                    <div class="divider"></div>
+                </div>
+                <div class="card-content">
+                    <div id="results-container">
+                        <!-- Results will be populated by JavaScript -->
+                    </div>
+                    <div id="submission-status" class="success-message hidden">
+                        Results have been saved to Google Sheets successfully!
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button id="new-assessment-btn" class="btn btn-primary">Start New Assessment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden iframe for form submission -->
+    <iframe id="hidden-iframe" name="hidden-iframe" style="display: none;"></iframe>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
