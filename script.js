@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   // Google Sheet submission URL - Replace with your own Google Apps Script Web App URL
-  const GOOGLE_SHEET_URL ="https://script.google.com/macros/s/AKfycbyLUr5elIrWBdESEOiJDsYDLGCVpYes2GcRmSPXRLExwLNbcJc2mlQRxF1tSOPo5YWY/exec";
+  const GOOGLE_SHEET_URL =
+    "https://script.google.com/a/macros/callboxinc.com/s/AKfycbzIUZuBOgjjt9gcZQ-kyc1raD7La1f4Ve-fcA0_DudjRkGTOXk_65gdapKBDLLQw-FbxA/exec"
 
   // Data objects
   // Qualification categories and items
@@ -259,6 +260,12 @@ document.addEventListener("DOMContentLoaded", () => {
     { level: "3 to 4 years", points: 0.5 },
     { level: "4 to 5 years", points: 0.8 },
     { level: "5+ years", points: 1 },
+  ]
+  const managerialExp = [
+    { level: "1 to 2 years", points: 1.3 },
+    { level: "3 to 4 years", points: 1.5 },
+    { level: "4 to 5 years", points: 1.8 },
+    { level: "5+ years", points: 2 },
   ]
 
   // Role descriptions for results page
@@ -911,8 +918,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const matches = calculateRoleMatches()
       resultsData = matches
 
-      // Submit to Google Sheets
+      // Submit to Google Sheets first, then show results
       submitToGoogleSheet(matches)
+
+      // Show results after a short delay
+      setTimeout(() => {
+        displayResults(matches)
+        showView("results")
+      }, 1500)
     }
   }
 
@@ -1086,7 +1099,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  function submitToGoogleSheet(matches) {
+  function submitToGoogleSheet(results) {
     // Show loading message
     document.getElementById("submission-status").textContent = "Saving results to Google Sheets..."
     document.getElementById("submission-status").classList.remove("hidden")
@@ -1104,29 +1117,29 @@ document.addEventListener("DOMContentLoaded", () => {
       .join(", ")
 
     // Format results with detailed information for Google Sheets
-    const role1 = matches[0]
+    const role1 = results[0]
       ? {
-          role: matches[0].role,
-          normalizedScore: matches[0].normalizedScore,
-          rawScore: matches[0].rawScore,
-          educationPoints: matches[0].educationPoints || 0,
-          experiencePoints: matches[0].experiencePoints || 0,
+          role: results[0].role,
+          normalizedScore: results[0].normalizedScore,
+          rawScore: results[0].rawScore,
+          educationPoints: results[0].educationPoints || 0,
+          experiencePoints: results[0].experiencePoints || 0,
         }
       : null
 
-    const role2 = matches[1]
+    const role2 = results[1]
       ? {
-          role: matches[1].role,
-          normalizedScore: matches[1].normalizedScore,
-          rawScore: matches[1].rawScore,
+          role: results[1].role,
+          normalizedScore: results[1].normalizedScore,
+          rawScore: results[1].rawScore,
         }
       : null
 
-    const role3 = matches[2]
+    const role3 = results[2]
       ? {
-          role: matches[2].role,
-          normalizedScore: matches[2].normalizedScore,
-          rawScore: matches[2].rawScore,
+          role: results[2].role,
+          normalizedScore: results[2].normalizedScore,
+          rawScore: results[2].rawScore,
         }
       : null
 
@@ -1141,52 +1154,73 @@ document.addEventListener("DOMContentLoaded", () => {
       qualifications: selectedQualifications,
       technical: selectedTechnical,
       industries: selectedIndustries,
-      role1: role1 ? role1.role : "None", // Changed to only send the role name without percentage
+      role1: role1 ? `${role1.role} (${role1.normalizedScore}%)` : "None",
       role1_raw_score: role1 ? role1.rawScore : 0,
       role1_normalized_score: role1 ? role1.normalizedScore : 0,
       education_points: role1 ? role1.educationPoints : 0,
       experience_points: role1 ? role1.experiencePoints : 0,
-      role2: role2 ? role2.role : "None", // Changed to only send the role name without percentage
+      role2: role2 ? `${role2.role} (${role2.normalizedScore}%)` : "None",
       role2_raw_score: role2 ? role2.rawScore : 0,
       role2_normalized_score: role2 ? role2.normalizedScore : 0,
-      role3: role3 ? role3.role : "None", // Changed to only send the role name without percentage
+      role3: role3 ? `${role3.role} (${role3.normalizedScore}%)` : "None",
       role3_raw_score: role3 ? role3.rawScore : 0,
       role3_normalized_score: role3 ? role3.normalizedScore : 0,
     }
 
     console.log("Sending data to Google Sheets:", data)
 
-    // Use fetch method only (removing the form submission to prevent duplicates)
-    fetch(GOOGLE_SHEET_URL, {
-      method: "POST",
-      mode: "no-cors", // This is important for CORS issues
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(data).toString(),
-    })
-      .then(() => {
-        console.log("Data submitted via fetch")
-        document.getElementById("submission-status").textContent =
-          "Results have been saved to Google Sheets successfully!"
-        
-        // Show results after successful submission
-        setTimeout(() => {
-          displayResults(matches)
-          showView("results")
-        }, 1500)
+    // Create a form element to submit the data
+    const form = document.createElement("form")
+    form.method = "POST"
+    form.action = GOOGLE_SHEET_URL
+    form.target = "hidden-iframe" // Submit to hidden iframe to prevent page reload
+
+    // Add each field as a hidden input
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        const input = document.createElement("input")
+        input.type = "hidden"
+        input.name = key
+        input.value = data[key]
+        form.appendChild(input)
+      }
+    }
+
+    // Add the form to the document and submit it
+    document.body.appendChild(form)
+
+    // Set up a listener for when the iframe loads (submission complete)
+    const iframe = document.getElementById("hidden-iframe")
+    iframe.onload = () => {
+      console.log("Form submitted successfully")
+      document.getElementById("submission-status").textContent =
+        "Results have been saved to Google Sheets successfully!"
+      document.getElementById("submission-status").classList.remove("hidden")
+
+      // Remove the form after submission
+      document.body.removeChild(form)
+    }
+
+    // Submit the form
+    form.submit()
+
+    // Also try the fetch method as a backup
+    setTimeout(() => {
+      fetch(GOOGLE_SHEET_URL, {
+        method: "POST",
+        mode: "no-cors", // This is important for CORS issues
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(data).toString(),
       })
-      .catch((error) => {
-        console.error("Error in submission:", error)
-        document.getElementById("submission-status").textContent =
-          "There was an error saving your results. Please try again."
-        
-        // Still show results even if submission fails
-        setTimeout(() => {
-          displayResults(matches)
-          showView("results")
-        }, 1500)
-      })
+        .then(() => {
+          console.log("Data submitted via fetch as backup")
+        })
+        .catch((error) => {
+          console.error("Error in backup submission:", error)
+        })
+    }, 1000) // Wait 1 second before trying the backup method
   }
 
   // Initialization Functions
@@ -1215,23 +1249,48 @@ document.addEventListener("DOMContentLoaded", () => {
       const categoryDiv = document.createElement("div")
       categoryDiv.className = "category"
 
-      let categoryHTML = `<h3 class="category-title">${category}</h3>`
-      categoryHTML += '<div class="category-items">'
+      const categoryTitle = document.createElement("h3")
+      categoryTitle.className = "category-title"
+      categoryTitle.textContent = category
+
+      const categoryItems = document.createElement("div")
+      categoryItems.className = "category-items"
 
       qualifications.forEach((qualification) => {
-        categoryHTML += `
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="qualification-${qualification}" name="qualification-${qualification}" value="${qualification}">
-                        <label for="qualification-${qualification}">${qualification}</label>
-                    </div>
-                `
+        const checkboxItem = document.createElement("div")
+        checkboxItem.className = "checkbox-item"
+
+        const input = document.createElement("input")
+        input.type = "checkbox"
+        input.id = `qualification-${qualification}`
+        input.name = `qualification-${qualification}`
+        input.value = qualification
+
+        const label = document.createElement("label")
+        label.htmlFor = `qualification-${qualification}`
+        label.textContent = qualification
+
+        // Border change logic for .checkbox-item
+        input.addEventListener("change", () => {
+          checkboxItem.style.border = input.checked ? "2px solid #063060" : "2px solid transparent";
+        })
+
+        checkboxItem.appendChild(input)
+        checkboxItem.appendChild(label)
+        categoryItems.appendChild(checkboxItem)
       })
 
-      categoryHTML += "</div>"
-      categoryDiv.innerHTML = categoryHTML
+      categoryTitle.addEventListener("click", () => {
+        categoryDiv.classList.toggle("active")
+      })
+
+      categoryDiv.appendChild(categoryTitle)
+      categoryDiv.appendChild(categoryItems)
+
       qualificationsContainer.appendChild(categoryDiv)
     })
-  }
+}
+
 
   function initializeTechnicalSkills() {
     const technicalContainer = document.getElementById("technical-container")
@@ -1241,23 +1300,48 @@ document.addEventListener("DOMContentLoaded", () => {
       const categoryDiv = document.createElement("div")
       categoryDiv.className = "category"
 
-      let categoryHTML = `<h3 class="category-title">${category}</h3>`
-      categoryHTML += '<div class="category-items">'
+      const categoryTitle = document.createElement("h3")
+      categoryTitle.className = "category-title"
+      categoryTitle.textContent = category
+
+      const categoryItems = document.createElement("div")
+      categoryItems.className = "category-items"
 
       skills.forEach((skill) => {
-        categoryHTML += `
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="technical-${skill}" name="technical-${skill}" value="${skill}">
-                        <label for="technical-${skill}">${skill}</label>
-                    </div>
-                `
+        const checkboxItem = document.createElement("div")
+        checkboxItem.className = "checkbox-item"
+
+        const input = document.createElement("input")
+        input.type = "checkbox"
+        input.id = `technical-${skill}`
+        input.name = `technical-${skill}`
+        input.value = skill
+
+        const label = document.createElement("label")
+        label.htmlFor = `technical-${skill}`
+        label.textContent = skill
+
+        // Border change logic for .checkbox-item
+        input.addEventListener("change", () => {
+          checkboxItem.style.border = input.checked ? "2px solid #063060" : "2px solid transparent";
+        })
+
+        checkboxItem.appendChild(input)
+        checkboxItem.appendChild(label)
+        categoryItems.appendChild(checkboxItem)
       })
 
-      categoryHTML += "</div>"
-      categoryDiv.innerHTML = categoryHTML
+      categoryTitle.addEventListener("click", () => {
+        categoryDiv.classList.toggle("active")
+      })
+
+      categoryDiv.appendChild(categoryTitle)
+      categoryDiv.appendChild(categoryItems)
+
       technicalContainer.appendChild(categoryDiv)
     })
-  }
+}
+
 
   function initializeIndustryOptions() {
     const industryContainer = document.getElementById("industry-container")
@@ -1280,16 +1364,81 @@ document.addEventListener("DOMContentLoaded", () => {
     const experienceContainer = document.getElementById("experience-options")
     experienceContainer.innerHTML = ""
 
-    experienceData.forEach((experience, index) => {
-      const radioItem = document.createElement("div")
-      radioItem.className = "radio-item"
+    const experienceCategories = {
+      "Rank and File": experienceData,
+      Managerial: managerialExp,
+    }
 
-      radioItem.innerHTML = `
-                <input type="radio" id="experience-${index}" name="experience" value="${experience.level}">
-                <label for="experience-${index}">${experience.level}</label>
-            `
+    let activeCategory = null // Track the currently active category
 
-      experienceContainer.appendChild(radioItem)
+    Object.entries(experienceCategories).forEach(([categoryName, experiences]) => {
+      const categoryDiv = document.createElement("div")
+      categoryDiv.className = "category"
+      categoryDiv.dataset.category = categoryName
+
+      const categoryTitle = document.createElement("h3")
+      categoryTitle.className = "category-title"
+      categoryTitle.textContent = categoryName
+
+      const categoryItems = document.createElement("div")
+      categoryItems.className = "category-items"
+
+      experiences.forEach((exp, index) => {
+        const radioItem = document.createElement("div")
+        radioItem.className = "radio-item"
+
+        const input = document.createElement("input")
+        input.type = "radio"
+        input.id = `experience-${categoryName.toLowerCase().replace(/\s+/g, "-")}-${index}`
+        input.name = "experience"
+        input.value = exp.level
+
+        const label = document.createElement("label")
+        label.htmlFor = input.id
+        label.textContent = `${exp.level}`
+
+        // Border change logic for .radio-item
+        input.addEventListener("change", () => {
+            // Clear 'selected' class from all .radio-item elements
+            document.querySelectorAll(".radio-item").forEach(item => {
+                item.classList.remove("selected")
+            })
+
+            // Apply 'selected' class to the selected item
+            if (input.checked) {
+                radioItem.classList.add("selected")
+
+                // Clear selections in the other category
+                document.querySelectorAll(`.category:not([data-category="${categoryName}"]) input[type="radio"]`)
+                    .forEach(otherInput => {
+                        otherInput.checked = false
+                        otherInput.parentElement.classList.remove("selected")
+                    })
+            }
+        })
+
+        radioItem.appendChild(input)
+        radioItem.appendChild(label)
+        categoryItems.appendChild(radioItem)
+      })
+
+      // Toggle functionality ensuring only one stays open
+      categoryTitle.addEventListener("click", () => {
+        if (activeCategory && activeCategory !== categoryDiv) {
+          activeCategory.classList.remove("active")  // Collapse the previously active category
+        }
+        categoryDiv.classList.toggle("active")
+        activeCategory = categoryDiv.classList.contains("active") ? categoryDiv : null
+      })
+
+      categoryDiv.appendChild(categoryTitle)
+      categoryDiv.appendChild(categoryItems)
+
+      experienceContainer.appendChild(categoryDiv)
     })
-  }
+}
+
+
+
 })
+
